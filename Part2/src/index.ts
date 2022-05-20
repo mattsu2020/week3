@@ -229,6 +229,7 @@ const genEcdhSharedKey = async ({
   )[0];
 };
 
+
 /*
  * Encrypts a plaintext using a given key.
  * @return The ciphertext.
@@ -237,8 +238,21 @@ const encrypt = async (
   plaintext: Plaintext,
   sharedKey: EcdhSharedKey,
 ): Promise<Ciphertext> => {
-  const mimc7 = await buildMimc7();
   // [assignment] generate the IV, use Mimc7 to hash the shared key with the IV, then encrypt the plain text
+  const mimc7 = await buildMimc7();
+    // Generate the IV
+  const iv = mimc7.multiHash(plaintext, BigInt(0))
+  const iv_int = buf2Bigint(iv)
+  const ciphertext: Ciphertext = {
+    iv: iv_int,
+    data: plaintext.map((e: bigint, i: number): bigint => {
+      return e + buf2Bigint(mimc7.hash(
+        sharedKey,
+        iv_int + BigInt(i),
+      ))
+    }),
+  }
+  return ciphertext
 };
 
 /*
@@ -250,6 +264,14 @@ const decrypt = async (
   sharedKey: EcdhSharedKey,
 ): Promise<Plaintext> => {
   // [assignment] use Mimc7 to hash the shared key with the IV, then descrypt the ciphertext
+  const mimc7 = await buildMimc7();
+  const plaintext: Plaintext = ciphertext.data.map(
+    (e: bigint, i: number): bigint => {
+      return BigInt(e) - buf2Bigint(mimc7.hash(sharedKey, BigInt(ciphertext.iv) + BigInt(i)));
+    }
+  )
+
+  return plaintext
 };
 
 export {

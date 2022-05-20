@@ -7,6 +7,7 @@ import {
   EdDSA
 } from '../index';
 
+jest.setTimeout(8000);
 describe('ECDH test', () => {
   let eddsa: EdDSA;
   beforeAll(async () => {
